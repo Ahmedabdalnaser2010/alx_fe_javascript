@@ -32,7 +32,7 @@ async function postQuotesToServer(quotesToPost) {
                     userId: 1
                 }),
                 headers: {
-                    'Content-Type': 'application/json', // Fixed header name
+                    'Content-Type': 'application/json',
                 },
             })
         );
@@ -69,7 +69,8 @@ async function syncQuotes() {
         quotes = mergedQuotes;
         populateCategories();
         filterQuotes();
-        showNotification('Quotes synced with server');
+        alert('Quotes synced with server!'); // Added the exact alert message
+        showNotification('Quotes updated from server');
     }
 
     // Post local quotes to server

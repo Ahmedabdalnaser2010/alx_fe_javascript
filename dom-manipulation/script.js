@@ -11,8 +11,8 @@ const quotes = [
 const quoteDisplay = document.getElementById('quoteDisplay');
 const newQuoteBtn = document.getElementById('newQuote');
 
-// Function to display a random quote
-function displayRandomQuote() {
+// Function to display a random quote (renamed to showRandomQuote)
+function showRandomQuote() {
     if (quotes.length === 0) {
         quoteDisplay.innerHTML = '<p>No quotes available. Please add some quotes first.</p>';
         return;
@@ -57,7 +57,7 @@ function addQuote() {
         quotes.push({ text, category });
         textInput.value = '';
         categoryInput.value = '';
-        displayRandomQuote();
+        showRandomQuote();
         alert('Quote added successfully!');
     } else {
         alert('Please enter both quote text and category.');
@@ -65,8 +65,8 @@ function addQuote() {
 }
 
 // Event listener for "Show New Quote" button
-newQuoteBtn.addEventListener('click', displayRandomQuote);
+newQuoteBtn.addEventListener('click', showRandomQuote);
 
 // Initialize
 createAddQuoteForm();
-displayRandomQuote();
+showRandomQuote();

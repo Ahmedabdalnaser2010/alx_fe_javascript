@@ -1,45 +1,53 @@
-// المهمة 0: بناء مولد محتوى ديناميكي
+// Initial quotes array
 let quotes = [
-    { text: "The only way to do great work is to love what you do.", category: "Motivation" },
+    { text: "The only way to do great work is to love what you do.", category: "Inspiration" },
     { text: "Innovation distinguishes between a leader and a follower.", category: "Leadership" },
-    { text: "Stay hungry, stay foolish.", category: "Inspiration" }
+    { text: "Your time is limited, don't waste it living someone else's life.", category: "Life" },
+    { text: "Stay hungry, stay foolish.", category: "Motivation" },
+    { text: "The journey of a thousand miles begins with one step.", category: "Inspiration" }
 ];
 
-// عرض اقتباس عشوائي
+// DOM elements
+const quoteDisplay = document.getElementById('quoteDisplay');
+const newQuoteBtn = document.getElementById('newQuote');
+
+// Display a random quote
 function showRandomQuote() {
+    if (quotes.length === 0) {
+        quoteDisplay.innerHTML = '<p>No quotes available. Please add some quotes first.</p>';
+        return;
+    }
+
     const randomIndex = Math.floor(Math.random() * quotes.length);
     const quote = quotes[randomIndex];
-    document.getElementById('quoteDisplay').innerHTML = `
-        <p>"${quote.text}"</p>
-        <small>— ${quote.category}</small>
-    `;
+
+    quoteDisplay.innerHTML = `
+    <blockquote>"${quote.text}"</blockquote>
+    <p><em>- ${quote.category}</em></p>
+  `;
 }
 
-// إنشاء نموذج إضافة اقتباس
-function createAddQuoteForm() {
-    document.getElementById('addQuoteBtn').addEventListener('click', function () {
-        const textInput = document.getElementById('newQuoteText');
-        const categoryInput = document.getElementById('newQuoteCategory');
+// Add a new quote
+function addQuote() {
+    const textInput = document.getElementById('newQuoteText');
+    const categoryInput = document.getElementById('newQuoteCategory');
 
-        if (textInput.value.trim() && categoryInput.value.trim()) {
-            const newQuote = {
-                text: textInput.value.trim(),
-                category: categoryInput.value.trim()
-            };
+    const text = textInput.value.trim();
+    const category = categoryInput.value.trim();
 
-            quotes.push(newQuote);
-            textInput.value = '';
-            categoryInput.value = '';
-            showRandomQuote();
-        } else {
-            alert('Please enter both quote text and category');
-        }
-    });
+    if (text && category) {
+        quotes.push({ text, category });
+        textInput.value = '';
+        categoryInput.value = '';
+        showRandomQuote();
+        alert('Quote added successfully!');
+    } else {
+        alert('Please enter both quote text and category.');
+    }
 }
 
-// تهيئة التطبيق
-document.addEventListener('DOMContentLoaded', function () {
-    document.getElementById('newQuote').addEventListener('click', showRandomQuote);
-    createAddQuoteForm();
-    showRandomQuote(); // عرض اقتباس عند التحميل
-});
+// Event listeners
+newQuoteBtn.addEventListener('click', showRandomQuote);
+
+// Initialize with a random quote
+showRandomQuote();

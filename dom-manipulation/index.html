@@ -1,29 +1,64 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dynamic Quote Generator</title>
-    <style>
-        body { font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; }
-        #quoteDisplay { margin: 20px 0; padding: 20px; border: 1px solid #ddd; border-radius: 5px; }
-        button { padding: 8px 16px; cursor: pointer; }
-        .add-quote-form { margin-top: 20px; padding: 20px; border: 1px solid #eee; }
-        input { padding: 8px; margin-right: 10px; }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dynamic Quote Generator</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+    #quoteDisplay {
+      margin: 20px 0;
+      padding: 20px;
+      border: 1px solid #ddd;
+      border-radius: 5px;
+      min-height: 100px;
+    }
+    button {
+      padding: 10px 15px;
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      margin: 5px;
+    }
+    button:hover {
+      background-color: #45a049;
+    }
+    input {
+      padding: 8px;
+      margin: 5px;
+      width: 300px;
+    }
+    .quote-form {
+      margin: 20px 0;
+      padding: 20px;
+      border: 1px solid #eee;
+      border-radius: 5px;
+    }
+  </style>
 </head>
 <body>
-    <h1>Dynamic Quote Generator</h1>
-    <div id="quoteDisplay"></div>
-    <button id="newQuote">Show New Quote</button>
-    
-    <div class="add-quote-form">
-        <h3>Add New Quote</h3>
-        <input id="newQuoteText" type="text" placeholder="Enter a new quote" />
-        <input id="newQuoteCategory" type="text" placeholder="Enter quote category" />
-        <button id="addQuoteBtn">Add Quote</button>
-    </div>
+  <h1>Dynamic Quote Generator</h1>
+  
+  <div id="quoteDisplay">
+    <p>Click "Show New Quote" to get started!</p>
+  </div>
+  
+  <button id="newQuote">Show New Quote</button>
+  
+  <div class="quote-form">
+    <h3>Add a New Quote</h3>
+    <input id="newQuoteText" type="text" placeholder="Enter a new quote" />
+    <input id="newQuoteCategory" type="text" placeholder="Enter quote category" />
+    <button onclick="addQuote()">Add Quote</button>
+  </div>
 
-    <script src="script.js"></script>
+  <script src="script.js"></script>
 </body>
 </html>

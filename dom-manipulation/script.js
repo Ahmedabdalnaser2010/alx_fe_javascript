@@ -1,85 +1,102 @@
-// Add this near the top with other DOM elements
-const categoryFilter = document.getElementById('categoryFilter');
+// Add these constants at the top of the file
+const API_URL = 'https://jsonplaceholder.typicode.com/posts'; // We'll use posts as our mock quotes
+const SYNC_INTERVAL = 30000; // Sync every 30 seconds
+let syncInterval;
 
-// Function to populate categories dropdown
-function populateCategories() {
-    // Clear existing options except "All Categories"
-    while (categoryFilter.options.length > 1) {
-        categoryFilter.remove(1);
-    }
+// Function to convert our quotes to API format and vice versa
+function quotesToApiFormat(quotes) {
+    return quotes.map((quote, index) => ({
+        id: index + 1,
+        title: `Quote ${index + 1}`,
+        body: `${quote.text} [Category: ${quote.category}]`,
+        userId: 1
+    }));
+}
 
-    // Get unique categories
-    const categories = [...new Set(quotes.map(quote => quote.category))];
-
-    // Add categories to dropdown
-    categories.forEach(category => {
-        const option = document.createElement('option');
-        option.value = category;
-        option.textContent = category;
-        categoryFilter.appendChild(option);
+function apiFormatToQuotes(posts) {
+    return posts.map(post => {
+        const categoryMatch = post.body.match(/\[Category: (.*?)\]/);
+        return {
+            text: post.body.replace(/ \[Category: .*?\]$/, ''),
+            category: categoryMatch ? categoryMatch[1] : 'Uncategorized'
+        };
     });
-
-    // Restore last selected filter if available
-    const lastFilter = localStorage.getItem('lastCategoryFilter');
-    if (lastFilter) {
-        categoryFilter.value = lastFilter;
-    }
 }
 
-// Function to filter quotes by category
-function filterQuotes() {
-    const selectedCategory = categoryFilter.value;
+// Function to sync with server
+async function syncWithServer() {
+    try {
+        // Get current quotes
+        const currentQuotes = JSON.parse(localStorage.getItem('quotes')) || [];
 
-    // Save selected filter to localStorage
-    localStorage.setItem('lastCategoryFilter', selectedCategory);
+        // Simulate fetching from server
+        const response = await fetch(API_URL);
+        const serverData = await response.json();
+        const serverQuotes = apiFormatToQuotes(serverData.slice(0, 5)); // Take first 5 as our server quotes
 
-    if (selectedCategory === 'all') {
-        showRandomQuote();
-    } else {
-        const filteredQuotes = quotes.filter(quote => quote.category === selectedCategory);
-        if (filteredQuotes.length > 0) {
-            const randomIndex = Math.floor(Math.random() * filteredQuotes.length);
-            const quote = filteredQuotes[randomIndex];
+        // Simple conflict resolution: server data takes precedence
+        const mergedQuotes = [...serverQuotes, ...currentQuotes];
 
-            quoteDisplay.innerHTML = `
-                <blockquote>"${quote.text}"</blockquote>
-                <p><em>- ${quote.category}</em></p>
-            `;
-        } else {
-            quoteDisplay.innerHTML = `<p>No quotes found in category: ${selectedCategory}</p>`;
+        // Remove duplicates (same text and category)
+        const uniqueQuotes = mergedQuotes.filter((quote, index, self) =>
+            index === self.findIndex(q =>
+                q.text === quote.text && q.category === quote.category
+            )
+        );
+
+        // Update local storage if there are changes
+        if (JSON.stringify(uniqueQuotes) !== JSON.stringify(currentQuotes)) {
+            localStorage.setItem('quotes', JSON.stringify(uniqueQuotes));
+            quotes = uniqueQuotes;
+
+            // Update UI
+            populateCategories();
+            filterQuotes();
+
+            // Show notification
+            showNotification('Quotes updated from server');
         }
+    } catch (error) {
+        console.error('Sync failed:', error);
+        showNotification('Sync failed. Please check your connection.', true);
     }
 }
 
-// Update addQuote function to handle new categories
-function addQuote() {
-    const textInput = document.getElementById('newQuoteText');
-    const categoryInput = document.getElementById('newQuoteCategory');
+// Function to show sync notifications
+function showNotification(message, isError = false) {
+    const notification = document.createElement('div');
+    notification.className = `notification ${isError ? 'error' : 'success'}`;
+    notification.textContent = message;
 
-    const text = textInput.value.trim();
-    const category = categoryInput.value.trim();
+    document.body.appendChild(notification);
 
-    if (text && category) {
-        quotes.push({ text, category });
-        saveQuotes();
-        textInput.value = '';
-        categoryInput.value = '';
-
-        // Update categories dropdown
-        populateCategories();
-
-        // Show the newly added quote
-        categoryFilter.value = category;
-        filterQuotes();
-
-        alert('Quote added successfully!');
-    } else {
-        alert('Please enter both quote text and category.');
-    }
+    setTimeout(() => {
+        notification.remove();
+    }, 3000);
 }
 
-// Add event listener for category filter
-categoryFilter.addEventListener('change', filterQuotes);
+// Start periodic syncing
+function startSync() {
+    syncInterval = setInterval(syncWithServer, SYNC_INTERVAL);
+    syncWithServer(); // Initial sync
+}
 
-// Initialize categories dropdown when page loads
-populateCategories();
+// Add sync controls to HTML (add this to your HTML)
+function addSyncControls() {
+    const syncContainer = document.createElement('div');
+    syncContainer.className = 'sync-section';
+
+    syncContainer.innerHTML = `
+        <h3>Data Sync</h3>
+        <button id="manualSync">Sync Now</button>
+        <div id="syncStatus">Last sync: Never</div>
+    `;
+
+    document.body.appendChild(syncContainer);
+
+    document.getElementById('manualSync').addEventListener('click', syncWithServer);
+}
+
+// Initialize sync functionality when page loads
+addSyncControls();
+startSync();

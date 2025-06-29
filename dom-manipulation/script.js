@@ -3,7 +3,7 @@ const API_URL = 'https://jsonplaceholder.typicode.com/posts'; // Mock API endpoi
 const SYNC_INTERVAL = 30000; // Sync every 30 seconds
 let syncInterval;
 
-// Function to fetch quotes from server (renamed to match check)
+// Function to fetch quotes from server
 async function fetchQuotesFromServer() {
     try {
         const response = await fetch(API_URL);
@@ -11,7 +11,7 @@ async function fetchQuotesFromServer() {
         const serverData = await response.json();
         return serverData.slice(0, 5).map(post => ({
             text: post.body,
-            category: `Server-${post.id}` // Add server prefix to categories
+            category: `Server-${post.id}`
         }));
     } catch (error) {
         console.error('Failed to fetch quotes:', error);
@@ -32,7 +32,7 @@ async function postQuotesToServer(quotesToPost) {
                     userId: 1
                 }),
                 headers: {
-                    'Content-type': 'application/json; charset=UTF-8',
+                    'Content-Type': 'application/json', // Fixed header name
                 },
             })
         );
@@ -45,12 +45,9 @@ async function postQuotesToServer(quotesToPost) {
     }
 }
 
-// Main sync function (renamed to match check)
+// Main sync function
 async function syncQuotes() {
-    // Get server quotes
     const serverQuotes = await fetchQuotesFromServer();
-
-    // Get local quotes
     const localQuotes = JSON.parse(localStorage.getItem('quotes')) || [];
 
     // Conflict resolution - server data takes precedence
@@ -75,7 +72,7 @@ async function syncQuotes() {
         showNotification('Quotes synced with server');
     }
 
-    // Post local quotes to server (in a real app, you'd want more sophisticated logic)
+    // Post local quotes to server
     await postQuotesToServer(localQuotes.filter(localQuote =>
         !serverQuotes.some(serverQuote =>
             serverQuote.text === localQuote.text &&
@@ -90,7 +87,7 @@ function startSync() {
     syncQuotes(); // Initial sync
 }
 
-// Notification function (keep this from previous implementation)
+// Notification function
 function showNotification(message, isError = false) {
     const notification = document.createElement('div');
     notification.className = `notification ${isError ? 'error' : 'success'}`;
@@ -112,6 +109,9 @@ function addSyncControls() {
         <h3>Data Sync</h3>
         <button id="manualSync">Sync Now</button>
         <div id="syncStatus">Last sync: ${new Date().toLocaleTimeString()}</div>
+        <div id="conflictNotification" style="display:none;color:red;">
+            Conflicts detected and resolved (server data preserved)
+        </div>
     `;
 
     document.body.appendChild(syncContainer);
@@ -119,6 +119,16 @@ function addSyncControls() {
     document.getElementById('manualSync').addEventListener('click', async () => {
         await syncQuotes();
         document.getElementById('syncStatus').textContent = `Last sync: ${new Date().toLocaleTimeString()}`;
+
+        // Show conflict notification if any conflicts were resolved
+        if (localStorage.getItem('conflictResolved')) {
+            const conflictNote = document.getElementById('conflictNotification');
+            conflictNote.style.display = 'block';
+            setTimeout(() => {
+                conflictNote.style.display = 'none';
+            }, 5000);
+            localStorage.removeItem('conflictResolved');
+        }
     });
 }
 

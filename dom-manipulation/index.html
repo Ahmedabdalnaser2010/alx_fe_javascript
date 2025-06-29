@@ -35,7 +35,7 @@
       margin: 5px;
       width: 300px;
     }
-    .quote-form {
+    .quote-form, .data-management {
       margin: 20px 0;
       padding: 20px;
       border: 1px solid #eee;
@@ -52,13 +52,9 @@
   
   <button id="newQuote">Show New Quote</button>
   
-  <div class="quote-form">
-    <h3>Add a New Quote</h3>
-    <input id="newQuoteText" type="text" placeholder="Enter a new quote" />
-    <input id="newQuoteCategory" type="text" placeholder="Enter quote category" />
-    <button onclick="addQuote()">Add Quote</button>
-  </div>
-
+  <!-- Form will be added dynamically by createAddQuoteForm() -->
+  <!-- Data management UI will be added dynamically by createDataManagementUI() -->
+  
   <script src="script.js"></script>
 </body>
 </html>

@@ -74,8 +74,8 @@ function addQuote() {
     }
 }
 
-// Function to export quotes to JSON file
-function exportQuotesToJson() {
+// Function to export quotes to JSON file (renamed to exportToJsonFile)
+function exportToJsonFile() {
     const dataStr = JSON.stringify(quotes, null, 2);
     const dataUri = 'data:application/json;charset=utf-8,' + encodeURIComponent(dataStr);
 
@@ -87,8 +87,8 @@ function exportQuotesToJson() {
     linkElement.click();
 }
 
-// Function to import quotes from JSON file
-function importQuotesFromJson(event) {
+// Function to import quotes from JSON file (renamed to importFromJsonFile)
+function importFromJsonFile(event) {
     const file = event.target.files[0];
     if (!file) return;
 
@@ -112,27 +112,27 @@ function importQuotesFromJson(event) {
     fileReader.readAsText(file);
 }
 
-// Create data management UI
+// Create data management UI with required elements
 function createDataManagementUI() {
     const dataContainer = document.createElement('div');
     dataContainer.className = 'data-management';
 
     dataContainer.innerHTML = `
     <h3>Data Management</h3>
-    <button id="exportBtn">Export Quotes to JSON</button>
+    <button id="exportBtn">Export Quotes</button>
     <br><br>
     <input type="file" id="importFile" accept=".json" style="display: none;" />
-    <button id="importBtn">Import Quotes from JSON</button>
+    <button id="importBtn">Import Quotes</button>
   `;
 
     document.body.appendChild(dataContainer);
 
     // Add event listeners
-    document.getElementById('exportBtn').addEventListener('click', exportQuotesToJson);
+    document.getElementById('exportBtn').addEventListener('click', exportToJsonFile);
     document.getElementById('importBtn').addEventListener('click', () => {
         document.getElementById('importFile').click();
     });
-    document.getElementById('importFile').addEventListener('change', importQuotesFromJson);
+    document.getElementById('importFile').addEventListener('change', importFromJsonFile);
 }
 
 // Event listener for "Show New Quote" button

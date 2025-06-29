@@ -10,6 +10,7 @@ let quotes = JSON.parse(localStorage.getItem('quotes')) || [
 // DOM elements
 const quoteDisplay = document.getElementById('quoteDisplay');
 const newQuoteBtn = document.getElementById('newQuote');
+const importFileInput = document.getElementById('importFile');
 
 // Save quotes to localStorage
 function saveQuotes() {
@@ -35,24 +36,6 @@ function showRandomQuote() {
   `;
 }
 
-// Function to create the add quote form
-function createAddQuoteForm() {
-    const formContainer = document.createElement('div');
-    formContainer.className = 'quote-form';
-
-    formContainer.innerHTML = `
-    <h3>Add a New Quote</h3>
-    <input id="newQuoteText" type="text" placeholder="Enter a new quote" />
-    <input id="newQuoteCategory" type="text" placeholder="Enter quote category" />
-    <button id="addQuoteBtn">Add Quote</button>
-  `;
-
-    document.body.appendChild(formContainer);
-
-    // Add event listener to the new button
-    document.getElementById('addQuoteBtn').addEventListener('click', addQuote);
-}
-
 // Function to add a new quote
 function addQuote() {
     const textInput = document.getElementById('newQuoteText');
@@ -67,41 +50,43 @@ function addQuote() {
         textInput.value = '';
         categoryInput.value = '';
         showRandomQuote();
-        if (typeof populateCategories === 'function') populateCategories();
         alert('Quote added successfully!');
     } else {
         alert('Please enter both quote text and category.');
     }
 }
 
-// Function to export quotes to JSON file (renamed to exportToJsonFile)
+// Function to export quotes to JSON file using Blob API
 function exportToJsonFile() {
-    const dataStr = JSON.stringify(quotes, null, 2);
-    const dataUri = 'data:application/json;charset=utf-8,' + encodeURIComponent(dataStr);
+    const data = JSON.stringify(quotes, null, 2);
+    const blob = new Blob([data], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
 
-    const exportFileDefaultName = 'quotes.json';
-
-    const linkElement = document.createElement('a');
-    linkElement.setAttribute('href', dataUri);
-    linkElement.setAttribute('download', exportFileDefaultName);
-    linkElement.click();
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'quotes.json';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
 }
 
-// Function to import quotes from JSON file (renamed to importFromJsonFile)
+// Function to import quotes from JSON file
 function importFromJsonFile(event) {
     const file = event.target.files[0];
     if (!file) return;
 
-    const fileReader = new FileReader();
-    fileReader.onload = function (event) {
+    const reader = new FileReader();
+    reader.onload = function (e) {
         try {
-            const importedQuotes = JSON.parse(event.target.result);
+            const importedQuotes = JSON.parse(e.target.result);
             if (Array.isArray(importedQuotes)) {
                 quotes = importedQuotes;
                 saveQuotes();
                 showRandomQuote();
-                if (typeof populateCategories === 'function') populateCategories();
                 alert('Quotes imported successfully!');
+                // Reset the file input to allow re-importing the same file
+                event.target.value = '';
             } else {
                 alert('Invalid format: Expected an array of quotes.');
             }
@@ -109,38 +94,14 @@ function importFromJsonFile(event) {
             alert('Error parsing JSON file: ' + error.message);
         }
     };
-    fileReader.readAsText(file);
+    reader.readAsText(file);
 }
 
-// Create data management UI with required elements
-function createDataManagementUI() {
-    const dataContainer = document.createElement('div');
-    dataContainer.className = 'data-management';
-
-    dataContainer.innerHTML = `
-    <h3>Data Management</h3>
-    <button id="exportBtn">Export Quotes</button>
-    <br><br>
-    <input type="file" id="importFile" accept=".json" style="display: none;" />
-    <button id="importBtn">Import Quotes</button>
-  `;
-
-    document.body.appendChild(dataContainer);
-
-    // Add event listeners
-    document.getElementById('exportBtn').addEventListener('click', exportToJsonFile);
-    document.getElementById('importBtn').addEventListener('click', () => {
-        document.getElementById('importFile').click();
-    });
-    document.getElementById('importFile').addEventListener('change', importFromJsonFile);
-}
-
-// Event listener for "Show New Quote" button
+// Event listeners
 newQuoteBtn.addEventListener('click', showRandomQuote);
+importFileInput.addEventListener('change', importFromJsonFile);
 
 // Initialize
-createAddQuoteForm();
-createDataManagementUI();
 showRandomQuote();
 
 // Show last quote from sessionStorage if available

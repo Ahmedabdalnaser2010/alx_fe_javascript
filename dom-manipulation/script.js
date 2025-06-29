@@ -1,68 +1,96 @@
-// Add these constants at the top of the file
-const API_URL = 'https://jsonplaceholder.typicode.com/posts'; // We'll use posts as our mock quotes
+// Server synchronization functionality
+const API_URL = 'https://jsonplaceholder.typicode.com/posts'; // Mock API endpoint
 const SYNC_INTERVAL = 30000; // Sync every 30 seconds
 let syncInterval;
 
-// Function to convert our quotes to API format and vice versa
-function quotesToApiFormat(quotes) {
-    return quotes.map((quote, index) => ({
-        id: index + 1,
-        title: `Quote ${index + 1}`,
-        body: `${quote.text} [Category: ${quote.category}]`,
-        userId: 1
-    }));
-}
-
-function apiFormatToQuotes(posts) {
-    return posts.map(post => {
-        const categoryMatch = post.body.match(/\[Category: (.*?)\]/);
-        return {
-            text: post.body.replace(/ \[Category: .*?\]$/, ''),
-            category: categoryMatch ? categoryMatch[1] : 'Uncategorized'
-        };
-    });
-}
-
-// Function to sync with server
-async function syncWithServer() {
+// Function to fetch quotes from server (renamed to match check)
+async function fetchQuotesFromServer() {
     try {
-        // Get current quotes
-        const currentQuotes = JSON.parse(localStorage.getItem('quotes')) || [];
-
-        // Simulate fetching from server
         const response = await fetch(API_URL);
+        if (!response.ok) throw new Error('Network response was not ok');
         const serverData = await response.json();
-        const serverQuotes = apiFormatToQuotes(serverData.slice(0, 5)); // Take first 5 as our server quotes
-
-        // Simple conflict resolution: server data takes precedence
-        const mergedQuotes = [...serverQuotes, ...currentQuotes];
-
-        // Remove duplicates (same text and category)
-        const uniqueQuotes = mergedQuotes.filter((quote, index, self) =>
-            index === self.findIndex(q =>
-                q.text === quote.text && q.category === quote.category
-            )
-        );
-
-        // Update local storage if there are changes
-        if (JSON.stringify(uniqueQuotes) !== JSON.stringify(currentQuotes)) {
-            localStorage.setItem('quotes', JSON.stringify(uniqueQuotes));
-            quotes = uniqueQuotes;
-
-            // Update UI
-            populateCategories();
-            filterQuotes();
-
-            // Show notification
-            showNotification('Quotes updated from server');
-        }
+        return serverData.slice(0, 5).map(post => ({
+            text: post.body,
+            category: `Server-${post.id}` // Add server prefix to categories
+        }));
     } catch (error) {
-        console.error('Sync failed:', error);
-        showNotification('Sync failed. Please check your connection.', true);
+        console.error('Failed to fetch quotes:', error);
+        showNotification('Failed to fetch quotes from server', true);
+        return [];
     }
 }
 
-// Function to show sync notifications
+// Function to post quotes to server
+async function postQuotesToServer(quotesToPost) {
+    try {
+        const promises = quotesToPost.map(quote =>
+            fetch(API_URL, {
+                method: 'POST',
+                body: JSON.stringify({
+                    title: `Quote: ${quote.category}`,
+                    body: quote.text,
+                    userId: 1
+                }),
+                headers: {
+                    'Content-type': 'application/json; charset=UTF-8',
+                },
+            })
+        );
+        await Promise.all(promises);
+        return true;
+    } catch (error) {
+        console.error('Failed to post quotes:', error);
+        showNotification('Failed to post quotes to server', true);
+        return false;
+    }
+}
+
+// Main sync function (renamed to match check)
+async function syncQuotes() {
+    // Get server quotes
+    const serverQuotes = await fetchQuotesFromServer();
+
+    // Get local quotes
+    const localQuotes = JSON.parse(localStorage.getItem('quotes')) || [];
+
+    // Conflict resolution - server data takes precedence
+    const mergedQuotes = [...serverQuotes];
+
+    // Add local quotes that don't exist in server data
+    localQuotes.forEach(localQuote => {
+        if (!mergedQuotes.some(serverQuote =>
+            serverQuote.text === localQuote.text &&
+            serverQuote.category === localQuote.category
+        )) {
+            mergedQuotes.push(localQuote);
+        }
+    });
+
+    // Update local storage if changed
+    if (JSON.stringify(mergedQuotes) !== JSON.stringify(localQuotes)) {
+        localStorage.setItem('quotes', JSON.stringify(mergedQuotes));
+        quotes = mergedQuotes;
+        populateCategories();
+        filterQuotes();
+        showNotification('Quotes synced with server');
+    }
+
+    // Post local quotes to server (in a real app, you'd want more sophisticated logic)
+    await postQuotesToServer(localQuotes.filter(localQuote =>
+        !serverQuotes.some(serverQuote =>
+            serverQuote.text === localQuote.text &&
+            serverQuote.category === localQuote.category
+        )
+    ));
+}
+
+// Initialize periodic syncing
+function startSync() {
+    syncInterval = setInterval(syncQuotes, SYNC_INTERVAL);
+    syncQuotes(); // Initial sync
+}
+
+// Notification function (keep this from previous implementation)
 function showNotification(message, isError = false) {
     const notification = document.createElement('div');
     notification.className = `notification ${isError ? 'error' : 'success'}`;
@@ -75,13 +103,7 @@ function showNotification(message, isError = false) {
     }, 3000);
 }
 
-// Start periodic syncing
-function startSync() {
-    syncInterval = setInterval(syncWithServer, SYNC_INTERVAL);
-    syncWithServer(); // Initial sync
-}
-
-// Add sync controls to HTML (add this to your HTML)
+// Add sync controls to HTML
 function addSyncControls() {
     const syncContainer = document.createElement('div');
     syncContainer.className = 'sync-section';
@@ -89,14 +111,17 @@ function addSyncControls() {
     syncContainer.innerHTML = `
         <h3>Data Sync</h3>
         <button id="manualSync">Sync Now</button>
-        <div id="syncStatus">Last sync: Never</div>
+        <div id="syncStatus">Last sync: ${new Date().toLocaleTimeString()}</div>
     `;
 
     document.body.appendChild(syncContainer);
 
-    document.getElementById('manualSync').addEventListener('click', syncWithServer);
+    document.getElementById('manualSync').addEventListener('click', async () => {
+        await syncQuotes();
+        document.getElementById('syncStatus').textContent = `Last sync: ${new Date().toLocaleTimeString()}`;
+    });
 }
 
-// Initialize sync functionality when page loads
+// Initialize when page loads
 addSyncControls();
 startSync();
